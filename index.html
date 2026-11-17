@@ -2,507 +2,167 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Mestre do Tempo - App completo de cronometragem, treinos e estudos">
-<meta name="theme-color" content="#1e3c72">
-<title>🧙‍♂️ Mestre do Tempo</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: #fff; min-height: 100vh; padding: 20px 10px;
-  }
-  .container { max-width: 900px; margin: 0 auto; }
-  h1 { text-align: center; font-size: 28px; margin-bottom: 6px; }
-  .subtitle { text-align: center; color: #cfd8ff; margin-bottom: 20px; font-size: 14px; }
-
-  /* Abas */
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
-  .tab-btn {
-    padding: 9px 14px; border: none; border-radius: 10px; cursor: pointer;
-    background: rgba(255,255,255,0.1); color: #fff; font-size: 13px; transition: .2s;
-  }
-  .tab-btn:hover { background: rgba(255,255,255,0.2); }
-  .tab-btn.active { background: #4cafef; font-weight: bold; }
-  .tab-content { display: none; animation: fade .3s; }
-  .tab-content.active { display: block; }
-  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-
-  .card { background: rgba(255,255,255,0.07); border-radius: 16px; padding: 25px; text-align: center; }
-  .display { font-size: 52px; font-weight: bold; font-variant-numeric: tabular-nums; margin: 15px 0; }
-  .display.small { font-size: 40px; }
-
-  .btn {
-    padding: 11px 20px; border: none; border-radius: 10px; cursor: pointer;
-    font-size: 15px; font-weight: bold; margin: 4px; transition: .2s; color: #fff;
-  }
-  .btn:hover { transform: translateY(-2px); }
-  .btn.start { background: #2ecc71; }
-  .btn.stop { background: #e74c3c; }
-  .btn.lap { background: #4cafef; }
-  .btn.reset { background: #95a5a6; }
-
-  input[type=number], input[type=time], input[type=text] {
-    padding: 10px; border: none; border-radius: 8px; font-size: 15px; margin: 4px;
-  }
-  .laps { list-style: none; margin-top: 15px; max-height: 200px; overflow-y: auto; }
-  .laps li { padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #cfd8ff; }
-
-  /* Calendário */
-  .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
-  .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.06); cursor: pointer; font-size: 13px; }
-  .cal-cell.feito { background: #2ecc71; font-weight: bold; }
-  .cal-cell.hoje { border: 2px solid #4cafef; }
-  .cal-cell.dow { background: none; color: #cfd8ff; font-size: 11px; cursor: default; }
-  .cal-cell.vazio { background: none; cursor: default; }
-
-  /* Ofensiva */
-  .ofensiva-box { text-align:center; background:rgba(255,87,34,0.15); border:2px solid rgba(255,152,0,0.4); border-radius:16px; padding:18px; margin-bottom:20px; }
-  .fogo { font-size:50px; line-height:1; transition:.3s; }
-  .fogo.ativo { animation: fogoPulsa 1.2s infinite; }
-  .fogo.apagado { filter: grayscale(1) opacity(0.4); }
-  @keyframes fogoPulsa { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
-  .ofensiva-num { font-size:42px; font-weight:bold; color:#ff9800; line-height:1; }
-  .ofensiva-label { color:#cfd8ff; font-size:14px; margin-top:4px; }
-  .recorde { margin-top:10px; color:#ffd54f; font-size:14px; font-weight:bold; }
-
-  /* Rotina (treinos/estudos) */
-  .rotina-form { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:20px; }
-  .select-rotina { padding:10px; border:none; border-radius:8px; background:rgba(255,255,255,0.9); color:#1e3c72; cursor:pointer; }
-  .rotina-form input { padding:10px; border:none; border-radius:8px; width:180px; }
-  .grade-rotina { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
-  .dia-card { background:rgba(255,255,255,0.07); border-radius:12px; padding:10px; }
-  .dia-card.dia-hoje { border:2px solid #4cafef; background:rgba(76,175,239,0.12); }
-  .dia-titulo { color:#fff; font-weight:bold; margin-bottom:8px; font-size:14px; }
-  .lista-ativ { list-style:none; }
-  .lista-ativ li { display:flex; justify-content:space-between; align-items:center; padding:5px 0; gap:4px; }
-  .ativ-nome { color:#e8ecff; font-size:13px; }
-  .ativ-nome.feito { text-decoration:line-through; color:#2ecc71; }
-  .vazio-ativ { color:#888; font-style:italic; font-size:12px; }
-  .check-ativ,.del-ativ { background:none; border:none; cursor:pointer; font-size:14px; padding:2px; }
-  .del-ativ { color:#ff6b6b; }
-
-  .stats-box { margin-top:25px; background:rgba(255,255,255,0.06); border-radius:16px; padding:18px; }
-  .stats-box h3 { margin-bottom:12px; }
-  .stats-box h4 { color:#ffd54f; margin:12px 0 6px; }
-  .stats-resumo { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-  .stat-item { background:rgba(76,175,239,0.15); border-radius:10px; padding:10px 4px; text-align:center; }
-  .stat-item b { display:block; font-size:24px; color:#4cafef; }
-  .stat-item span { font-size:11px; color:#cfd8ff; }
-  .ranking { list-style:none; }
-  .ranking li { color:#e8ecff; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.08); }
-  .stats-vazio { color:#cfd8ff; text-align:center; }
-
-  footer { text-align:center; margin-top:30px; color:#9fb0e0; font-size:12px; }
-  footer a { color:#4cafef; text-decoration:none; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Segurança: só arquivos deste site (nada de script embutido ou de fora). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="description" content="Ritmo: relógio, cronômetro, regressivo, HIIT, despertador, relógio mundial, rotina de treinos e estudos e a sua ofensiva.">
+<meta name="theme-color" content="#14213d">
+<title>Ritmo — tempo, treinos e estudos</title>
+<link rel="icon" href="icone.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <h1>🧙‍♂️ Mestre do Tempo</h1>
-  <p class="subtitle">Domine seu tempo, seu corpo e sua mente</p>
+<header class="topo">
+  <h1 class="marca"><img src="icone.svg" alt="" width="28" height="28"> Ritmo</h1>
+  <p class="lema">Seu tempo, seus treinos e estudos no compasso certo</p>
+  <nav class="abas" role="tablist" aria-label="Partes do Ritmo">
+    <button type="button" role="tab" data-aba="relogio" aria-selected="true">Relógio</button>
+    <button type="button" role="tab" data-aba="crono" aria-selected="false">Cronômetro</button>
+    <button type="button" role="tab" data-aba="regressivo" aria-selected="false">Regressivo</button>
+    <button type="button" role="tab" data-aba="hiit" aria-selected="false">HIIT</button>
+    <button type="button" role="tab" data-aba="despertador" aria-selected="false">Despertador</button>
+    <button type="button" role="tab" data-aba="mundial" aria-selected="false">Mundial</button>
+    <button type="button" role="tab" data-aba="treinos" aria-selected="false">Treinos</button>
+    <button type="button" role="tab" data-aba="estudos" aria-selected="false">Estudos</button>
+    <button type="button" role="tab" data-aba="calendario" aria-selected="false">Calendário</button>
+  </nav>
+</header>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="relogio">🕐 Relógio</button>
-    <button class="tab-btn" data-tab="crono">⏱️ Cronômetro</button>
-    <button class="tab-btn" data-tab="regressivo">⏳ Regressivo</button>
-    <button class="tab-btn" data-tab="hiit">🏃 HIIT</button>
-    <button class="tab-btn" data-tab="despertador">⏰ Despertador</button>
-    <button class="tab-btn" data-tab="mundial">🌍 Mundial</button>
-    <button class="tab-btn" data-tab="treinos">🏋️ Treinos</button>
-    <button class="tab-btn" data-tab="estudos">📚 Estudos</button>
-    <button class="tab-btn" data-tab="calendario">📅 Calendário</button>
-  </div>
-
+<main class="container">
   <!-- RELÓGIO -->
-  <div id="relogio" class="tab-content active">
-    <div class="card">
-      <div class="display" id="relogioDisplay">00:00:00</div>
-      <div id="dataDisplay" style="color:#cfd8ff;"></div>
+  <section id="relogio" class="aba ativa" role="tabpanel">
+    <div class="cartao centro">
+      <h2 class="titulo-aba">Relógio</h2>
+      <div class="mostrador" id="relogioDisplay">00:00:00</div>
+      <p class="suave" id="dataDisplay"></p>
     </div>
-  </div>
+  </section>
 
   <!-- CRONÔMETRO -->
-  <div id="crono" class="tab-content">
-    <div class="card">
-      <div class="display" id="cronoDisplay">00:00:00.0</div>
-      <button class="btn start" id="cronoStart">Iniciar</button>
-      <button class="btn lap" id="cronoLap">Volta</button>
-      <button class="btn reset" id="cronoReset">Zerar</button>
-      <ul class="laps" id="cronoLaps"></ul>
+  <section id="crono" class="aba" role="tabpanel">
+    <div class="cartao centro">
+      <h2 class="titulo-aba">Cronômetro</h2>
+      <div class="mostrador" id="cronoDisplay">00:00:00.0</div>
+      <div class="botoes">
+        <button type="button" class="botao ir" id="cronoStart">Iniciar</button>
+        <button type="button" class="botao" id="cronoLap">Volta</button>
+        <button type="button" class="botao neutro" id="cronoReset">Zerar</button>
+      </div>
+      <ol class="voltas" id="cronoLaps" reversed></ol>
     </div>
-  </div>
+  </section>
 
   <!-- REGRESSIVO -->
-  <div id="regressivo" class="tab-content">
-    <div class="card">
-      <div class="display" id="regDisplay">00:00</div>
-      <div>
-        <input type="number" id="regMin" placeholder="Min" min="0" value="1" style="width:80px;">
-        <input type="number" id="regSeg" placeholder="Seg" min="0" max="59" value="0" style="width:80px;">
+  <section id="regressivo" class="aba" role="tabpanel">
+    <div class="cartao centro">
+      <h2 class="titulo-aba">Regressivo</h2>
+      <div class="mostrador" id="regDisplay">00:00</div>
+      <div class="campos">
+        <label>Minutos <input type="number" id="regMin" min="0" max="999" value="1" inputmode="numeric"></label>
+        <label>Segundos <input type="number" id="regSeg" min="0" max="59" value="0" inputmode="numeric"></label>
       </div>
-      <button class="btn start" id="regStart">Iniciar</button>
-      <button class="btn stop" id="regStop">Parar</button>
-      <button class="btn reset" id="regReset">Zerar</button>
+      <div class="botoes">
+        <button type="button" class="botao ir" id="regStart">Iniciar</button>
+        <button type="button" class="botao parar" id="regStop">Pausar</button>
+        <button type="button" class="botao neutro" id="regReset">Zerar</button>
+      </div>
     </div>
-  </div>
+  </section>
 
   <!-- HIIT -->
-  <div id="hiit" class="tab-content">
-    <div class="card">
-      <div id="hiitFase" style="font-size:22px; font-weight:bold;">Pronto?</div>
-      <div class="display small" id="hiitDisplay">00</div>
-      <div id="hiitCiclo" style="color:#cfd8ff;"></div>
-      <div style="margin:10px 0;">
-        <input type="number" id="hiitSprint" placeholder="Sprint(s)" value="30" style="width:90px;">
-        <input type="number" id="hiitDescanso" placeholder="Descanso(s)" value="30" style="width:100px;">
-        <input type="number" id="hiitCiclos" placeholder="Ciclos" value="8" style="width:80px;">
+  <section id="hiit" class="aba" role="tabpanel">
+    <div class="cartao centro">
+      <h2 class="titulo-aba">HIIT (tiros com descanso)</h2>
+      <p class="fase" id="hiitFase">Pronto?</p>
+      <div class="mostrador" id="hiitDisplay">00</div>
+      <p class="suave" id="hiitCiclo"></p>
+      <div class="campos">
+        <label>Tiro (s) <input type="number" id="hiitSprint" min="5" max="600" value="30" inputmode="numeric"></label>
+        <label>Descanso (s) <input type="number" id="hiitDescanso" min="5" max="600" value="30" inputmode="numeric"></label>
+        <label>Ciclos <input type="number" id="hiitCiclos" min="1" max="50" value="8" inputmode="numeric"></label>
       </div>
-      <button class="btn start" id="hiitStart">Iniciar</button>
-      <button class="btn stop" id="hiitStop">Parar</button>
+      <div class="botoes">
+        <button type="button" class="botao ir" id="hiitStart">Iniciar</button>
+        <button type="button" class="botao parar" id="hiitStop">Parar</button>
+      </div>
     </div>
-  </div>
+  </section>
 
   <!-- DESPERTADOR -->
-  <div id="despertador" class="tab-content">
-    <div class="card">
-      <p>Definir alarme:</p>
-      <input type="time" id="alarmeHora">
-      <button class="btn start" id="alarmeSet">Ativar</button>
-      <button class="btn stop" id="alarmeOff">Desativar</button>
-      <div id="alarmeStatus" style="margin-top:12px; color:#cfd8ff;">Nenhum alarme ativo</div>
+  <section id="despertador" class="aba" role="tabpanel">
+    <div class="cartao centro">
+      <h2 class="titulo-aba">Despertador</h2>
+      <label>Horário <input type="time" id="alarmeHora"></label>
+      <div class="botoes">
+        <button type="button" class="botao ir" id="alarmeSet">Ativar</button>
+        <button type="button" class="botao parar" id="alarmeOff">Desativar</button>
+      </div>
+      <p class="suave" id="alarmeStatus">Nenhum alarme ativo</p>
+      <p class="nota">Deixe esta página aberta: o navegador só toca o alarme com ela aberta (mesmo com a tela bloqueada, ele
+        toca ao voltar para ela, se já passou da hora).</p>
     </div>
-  </div>
+  </section>
 
   <!-- MUNDIAL -->
-  <div id="mundial" class="tab-content">
-    <div class="card" id="mundialCard"></div>
-  </div>
+  <section id="mundial" class="aba" role="tabpanel">
+    <div class="cartao">
+      <h2 class="titulo-aba">Relógio mundial</h2>
+      <ul class="fusos" id="mundialLista"></ul>
+    </div>
+  </section>
 
   <!-- TREINOS -->
-  <div id="treinos" class="tab-content">
-    <div class="rotina-form">
-      <select id="diaSemanaT" class="select-rotina">
-        <option value="0">Domingo</option><option value="1">Segunda</option>
-        <option value="2">Terça</option><option value="3">Quarta</option>
-        <option value="4">Quinta</option><option value="5">Sexta</option>
-        <option value="6">Sábado</option>
-      </select>
-      <input type="text" id="nomeTreinoAtiv" list="listaTreinos" placeholder="Digite ou escolha o treino...">
+  <section id="treinos" class="aba" role="tabpanel">
+    <h2 class="titulo-aba">Rotina de treinos</h2>
+    <form class="rotina-form" id="formTreinos" autocomplete="off">
+      <label class="oculto" for="diaSemanaT">Dia</label>
+      <select id="diaSemanaT"></select>
+      <label class="oculto" for="nomeTreinoAtiv">Treino</label>
+      <input type="text" id="nomeTreinoAtiv" list="listaTreinos" maxlength="60" placeholder="Digite ou escolha o treino…">
       <datalist id="listaTreinos"></datalist>
-      <button id="addTreinoAtiv" class="btn lap">+ Adicionar</button>
-    </div>
+      <button type="submit" class="botao">Adicionar</button>
+    </form>
     <div id="gradeTreinos" class="grade-rotina"></div>
-    <div class="stats-box"><h3>📊 Estatísticas de treinos do mês</h3><div id="statsTreinos"></div></div>
-  </div>
+    <div class="cartao estatisticas"><h3>Treinos deste mês</h3><div id="statsTreinos"></div></div>
+  </section>
 
   <!-- ESTUDOS -->
-  <div id="estudos" class="tab-content">
-    <div class="rotina-form">
-      <select id="diaSemanaE" class="select-rotina">
-        <option value="0">Domingo</option><option value="1">Segunda</option>
-        <option value="2">Terça</option><option value="3">Quarta</option>
-        <option value="4">Quinta</option><option value="5">Sexta</option>
-        <option value="6">Sábado</option>
-      </select>
-      <input type="text" id="nomeEstudoAtiv" list="listaEstudos" placeholder="Digite ou escolha a matéria...">
+  <section id="estudos" class="aba" role="tabpanel">
+    <h2 class="titulo-aba">Rotina de estudos</h2>
+    <form class="rotina-form" id="formEstudos" autocomplete="off">
+      <label class="oculto" for="diaSemanaE">Dia</label>
+      <select id="diaSemanaE"></select>
+      <label class="oculto" for="nomeEstudoAtiv">Matéria</label>
+      <input type="text" id="nomeEstudoAtiv" list="listaEstudos" maxlength="60" placeholder="Digite ou escolha a matéria…">
       <datalist id="listaEstudos"></datalist>
-      <button id="addEstudoAtiv" class="btn lap">+ Adicionar</button>
-    </div>
+      <button type="submit" class="botao">Adicionar</button>
+    </form>
     <div id="gradeEstudos" class="grade-rotina"></div>
-    <div class="stats-box"><h3>📊 Estatísticas de estudos do mês</h3><div id="statsEstudos"></div></div>
-  </div>
+    <div class="cartao estatisticas"><h3>Estudos deste mês</h3><div id="statsEstudos"></div></div>
+  </section>
 
   <!-- CALENDÁRIO -->
-  <div id="calendario" class="tab-content">
-    <div class="ofensiva-box">
-      <div class="fogo" id="fogoEmoji">🔥</div>
-      <div class="ofensiva-num" id="ofensivaNum">0</div>
-      <div class="ofensiva-label">dias de ofensiva</div>
-      <div class="recorde" id="recordeStreak">🏅 Recorde: 0 dias</div>
+  <section id="calendario" class="aba" role="tabpanel">
+    <h2 class="titulo-aba">Calendário e ofensiva</h2>
+    <div class="ofensiva">
+      <div><span class="ofensiva-num" id="ofensivaNum">0</span> <span class="suave">dias seguidos</span></div>
+      <p class="recorde" id="recordeStreak">Recorde: 0 dias</p>
     </div>
-    <div class="card">
-      <div class="cal-header">
-        <button class="btn reset" id="calPrev">‹</button>
-        <span id="calMesAno" style="font-weight:bold;"></span>
-        <button class="btn reset" id="calNext">›</button>
+    <div class="cartao">
+      <div class="cal-topo">
+        <button type="button" class="botao neutro pequeno" id="calPrev" aria-label="Mês anterior">‹</button>
+        <strong id="calMesAno"></strong>
+        <button type="button" class="botao neutro pequeno" id="calNext" aria-label="Próximo mês">›</button>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <button class="btn start" id="marcarHoje" style="margin-top:15px;">✅ Marcar hoje</button>
-      <div id="totalTreinos" style="margin-top:12px; color:#cfd8ff;"></div>
+      <div class="cal-grade" id="calGrid"></div>
+      <button type="button" class="botao ir largo" id="marcarHoje">Marcar hoje como ativo</button>
+      <p class="suave" id="totalTreinos"></p>
     </div>
-  </div>
+  </section>
+</main>
 
-  <footer>
-    Feito com 🔥 por Vitor · <a href="#">Mestre do Tempo</a>
-  </footer>
-</div>
+<footer class="rodape">Feito por Vitor · Ritmo</footer>
 
-<script>
-// ===== UTILS =====
-function pad(n){ return String(n).padStart(2,"0"); }
-function chaveData(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function falar(txt){
-  if("speechSynthesis" in window){
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = "pt-BR";
-    speechSynthesis.speak(u);
-  }
-}
-function bip(freq=800, dur=200){
-  try{
-    const ac = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.connect(g); g.connect(ac.destination);
-    o.frequency.value = freq; o.type = "sine";
-    o.start(); g.gain.setValueAtTime(0.3, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur/1000);
-    o.stop(ac.currentTime+dur/1000);
-  }catch(e){}
-}
-function getDiasTreinados(){ return JSON.parse(localStorage.getItem("diasTreinados")||"[]"); }
-function salvarDiasTreinados(arr){ localStorage.setItem("diasTreinados", JSON.stringify(arr)); }
-
-// ===== ABAS =====
-document.querySelectorAll(".tab-btn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.tab).classList.add("active");
-  });
-});
-
-// ===== RELÓGIO =====
-const relogioDisplay = document.getElementById("relogioDisplay");
-const dataDisplay = document.getElementById("dataDisplay");
-setInterval(()=>{
-  const d = new Date();
-  relogioDisplay.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  dataDisplay.textContent = d.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-},1000);
-
-// ===== CRONÔMETRO =====
-let cronoInt, cronoMs=0, cronoRodando=false;
-const cronoDisplay = document.getElementById("cronoDisplay");
-const cronoLaps = document.getElementById("cronoLaps");
-function fmtCrono(ms){
-  const h=Math.floor(ms/3600000), m=Math.floor(ms%3600000/60000), s=Math.floor(ms%60000/1000), d=Math.floor(ms%1000/100);
-  return `${pad(h)}:${pad(m)}:${pad(s)}.${d}`;
-}
-document.getElementById("cronoStart").addEventListener("click",function(){
-  if(cronoRodando){ clearInterval(cronoInt); this.textContent="Iniciar"; this.className="btn start"; }
-  else{
-    const ini = Date.now()-cronoMs;
-    cronoInt = setInterval(()=>{ cronoMs=Date.now()-ini; cronoDisplay.textContent=fmtCrono(cronoMs); },50);
-    this.textContent="Pausar"; this.className="btn stop";
-  }
-  cronoRodando=!cronoRodando;
-});
-document.getElementById("cronoLap").addEventListener("click",()=>{
-  if(cronoMs>0){ const li=document.createElement("li"); li.textContent=`Volta ${cronoLaps.children.length+1}: ${fmtCrono(cronoMs)}`; cronoLaps.prepend(li); }
-});
-document.getElementById("cronoReset").addEventListener("click",()=>{
-  clearInterval(cronoInt); cronoMs=0; cronoRodando=false; cronoDisplay.textContent="00:00:00.0";
-  cronoLaps.innerHTML=""; const b=document.getElementById("cronoStart"); b.textContent="Iniciar"; b.className="btn start";
-});
-
-// ===== REGRESSIVO =====
-let regInt, regSeg=0;
-const regDisplay = document.getElementById("regDisplay");
-function fmtReg(s){ return `${pad(Math.floor(s/60))}:${pad(s%60)}`; }
-document.getElementById("regStart").addEventListener("click",()=>{
-  clearInterval(regInt);
-  if(regSeg<=0) regSeg = (+document.getElementById("regMin").value||0)*60 + (+document.getElementById("regSeg").value||0);
-  if(regSeg<=0) return;
-  regInt = setInterval(()=>{
-    regSeg--; regDisplay.textContent=fmtReg(regSeg);
-    if(regSeg<=0){ clearInterval(regInt); bip(); falar("Tempo esgotado!"); }
-  },1000);
-});
-document.getElementById("regStop").addEventListener("click",()=>clearInterval(regInt));
-document.getElementById("regReset").addEventListener("click",()=>{ clearInterval(regInt); regSeg=0; regDisplay.textContent="00:00"; });
-
-// ===== HIIT =====
-let hiitInt, hiitRodando=false;
-const hiitFase=document.getElementById("hiitFase"), hiitDisplay=document.getElementById("hiitDisplay"), hiitCiclo=document.getElementById("hiitCiclo");
-document.getElementById("hiitStart").addEventListener("click",()=>{
-  if(hiitRodando) return;
-  const sprint=+document.getElementById("hiitSprint").value||30;
-  const descanso=+document.getElementById("hiitDescanso").value||30;
-  const ciclos=+document.getElementById("hiitCiclos").value||8;
-  let cAtual=1, fase="sprint", t=sprint;
-  hiitRodando=true; falar("Começou! Sprint!");
-  hiitInt=setInterval(()=>{
-    hiitFase.textContent = fase==="sprint"?"🔥 SPRINT":"😮‍💨 DESCANSO";
-    hiitDisplay.textContent=pad(t); hiitCiclo.textContent=`Ciclo ${cAtual}/${ciclos}`;
-    if(t<=0){
-      bip(fase==="sprint"?500:900);
-      if(fase==="sprint"){ fase="descanso"; t=descanso; falar("Descanso"); }
-      else{
-        cAtual++;
-        if(cAtual>ciclos){ clearInterval(hiitInt); hiitRodando=false; hiitFase.textContent="✅ Concluído!"; hiitDisplay.textContent="00"; falar("Treino concluído! Mandou bem!");
-          let dias=getDiasTreinados(); const hk=chaveData(new Date()); if(!dias.includes(hk)){dias.push(hk);salvarDiasTreinados(dias);} atualizarOfensiva(); renderCalendario(); return; }
-        fase="sprint"; t=sprint; falar("Sprint!");
-      }
-    }
-    t--;
-  },1000);
-});
-document.getElementById("hiitStop").addEventListener("click",()=>{ clearInterval(hiitInt); hiitRodando=false; hiitFase.textContent="Parado"; });
-
-// ===== DESPERTADOR =====
-let alarmeInt, alarmeHora=null;
-document.getElementById("alarmeSet").addEventListener("click",()=>{
-  alarmeHora=document.getElementById("alarmeHora").value;
-  if(!alarmeHora){ alert("Escolha um horário!"); return; }
-  document.getElementById("alarmeStatus").textContent=`⏰ Alarme ativo para ${alarmeHora}`;
-  clearInterval(alarmeInt);
-  alarmeInt=setInterval(()=>{
-    const d=new Date(); if(`${pad(d.getHours())}:${pad(d.getMinutes())}`===alarmeHora && d.getSeconds()===0){
-      bip(1000,500); falar("Acorde! O alarme está tocando!"); alert("⏰ ALARME!");
-    }
-  },1000);
-});
-document.getElementById("alarmeOff").addEventListener("click",()=>{ clearInterval(alarmeInt); alarmeHora=null; document.getElementById("alarmeStatus").textContent="Nenhum alarme ativo"; });
-
-// ===== MUNDIAL =====
-const fusos=[{n:"🇧🇷 São Paulo",tz:"America/Sao_Paulo"},{n:"🇺🇸 Nova York",tz:"America/New_York"},{n:"🇬🇧 Londres",tz:"Europe/London"},{n:"🇯🇵 Tóquio",tz:"Asia/Tokyo"},{n:"🇦🇪 Dubai",tz:"Asia/Dubai"},{n:"🇦🇺 Sydney",tz:"Australia/Sydney"}];
-setInterval(()=>{
-  document.getElementById("mundialCard").innerHTML = fusos.map(f=>{
-    const h=new Date().toLocaleTimeString("pt-BR",{timeZone:f.tz,hour:"2-digit",minute:"2-digit",second:"2-digit"});
-    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);"><span>${f.n}</span><b>${h}</b></div>`;
-  }).join("");
-},1000);
-
-// ===== CALENDÁRIO =====
-let calData=new Date();
-const calGrid=document.getElementById("calGrid"), calMesAno=document.getElementById("calMesAno"), totalTreinos=document.getElementById("totalTreinos");
-const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-function renderCalendario(){
-  const ano=calData.getFullYear(), mes=calData.getMonth();
-  calMesAno.textContent=`${MESES[mes]} ${ano}`;
-  calGrid.innerHTML="";
-  ["D","S","T","Q","Q","S","S"].forEach(d=>{ const c=document.createElement("div"); c.className="cal-cell dow"; c.textContent=d; calGrid.appendChild(c); });
-  const primeiro=new Date(ano,mes,1).getDay(), totalDias=new Date(ano,mes+1,0).getDate();
-  const dias=getDiasTreinados(), hojeKey=chaveData(new Date());
-  for(let i=0;i<primeiro;i++){ const c=document.createElement("div"); c.className="cal-cell vazio"; calGrid.appendChild(c); }
-  let totalMes=0;
-  for(let d=1;d<=totalDias;d++){
-    const key=`${ano}-${pad(mes+1)}-${pad(d)}`;
-    const c=document.createElement("div"); c.className="cal-cell"; c.textContent=d;
-    if(dias.includes(key)){ c.classList.add("feito"); totalMes++; }
-    if(key===hojeKey) c.classList.add("hoje");
-    c.addEventListener("click",()=>{
-      let arr=getDiasTreinados();
-      if(arr.includes(key)) arr=arr.filter(x=>x!==key); else arr.push(key);
-      salvarDiasTreinados(arr); renderCalendario(); atualizarOfensiva();
-    });
-    calGrid.appendChild(c);
-  }
-  totalTreinos.textContent=`🏆 ${totalMes} dia(s) ativo(s) neste mês | ${dias.length} no total`;
-  atualizarOfensiva();
-}
-document.getElementById("calPrev").addEventListener("click",()=>{ calData.setMonth(calData.getMonth()-1); renderCalendario(); });
-document.getElementById("calNext").addEventListener("click",()=>{ calData.setMonth(calData.getMonth()+1); renderCalendario(); });
-document.getElementById("marcarHoje").addEventListener("click",()=>{
-  const hk=chaveData(new Date()); let arr=getDiasTreinados();
-  if(!arr.includes(hk)){ arr.push(hk); salvarDiasTreinados(arr); }
-  calData=new Date(); renderCalendario();
-});
-
-// ===== OFENSIVA =====
-const fogoEmoji=document.getElementById("fogoEmoji"), ofensivaNum=document.getElementById("ofensivaNum"), recordeStreak=document.getElementById("recordeStreak");
-function strParaData(s){ const[a,m,d]=s.split("-").map(Number); return new Date(a,m-1,d); }
-function diffDias(d1,d2){ return Math.round((d2-d1)/86400000); }
-function calcularOfensiva(){
-  const dias=getDiasTreinados().map(strParaData).sort((a,b)=>a-b);
-  if(!dias.length) return 0;
-  const hoje=new Date(); hoje.setHours(0,0,0,0);
-  if(diffDias(dias[dias.length-1],hoje)>1) return 0;
-  let s=1;
-  for(let i=dias.length-1;i>0;i--){ const g=diffDias(dias[i-1],dias[i]); if(g===1)s++; else if(g===0)continue; else break; }
-  return s;
-}
-function atualizarOfensiva(){
-  const s=calcularOfensiva(); ofensivaNum.textContent=s;
-  let rec=parseInt(localStorage.getItem("recordeOfensiva")||"0");
-  if(s>rec){ rec=s; localStorage.setItem("recordeOfensiva",rec); }
-  recordeStreak.textContent=`🏅 Recorde: ${rec} dia(s)`;
-  fogoEmoji.classList.remove("ativo","apagado");
-  if(s>0){ fogoEmoji.classList.add("ativo"); fogoEmoji.textContent="🔥"; }
-  else{ fogoEmoji.classList.add("apagado"); fogoEmoji.textContent="🧊"; }
-}
-
-// ===== TREINOS & ESTUDOS =====
-const ESPORTES=["Musculação","Corrida","Caminhada","Ciclismo","Natação","Muay Thai","Boxe","Jiu-Jitsu","Judô","Karatê","Taekwondo","MMA","Crossfit","Funcional","Pilates","Yoga","Alongamento","Futebol","Futsal","Vôlei","Basquete","Tênis","Handebol","Escalada","Surf","Skate","Dança","Spinning","HIIT","Calistenia"];
-const MATERIAS=["Matemática","Português","Redação","Leis / Direito","História","Geografia","Física","Química","Biologia","Filosofia","Sociologia","Programação","Lógica","Estatística","Economia","Contabilidade","Administração","Informática","Atualidades","Literatura","Constituição","Raciocínio Lógico","Inglês","Espanhol","Francês","Alemão","Italiano","Japonês","Chinês (Mandarim)","Coreano","Russo","Árabe","Latim","Libras","Holandês","Grego"];
-const DIAS_NOME=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-function getFeitos(){ return JSON.parse(localStorage.getItem("atividadesFeitas")||"[]"); }
-function salvarFeitos(a){ localStorage.setItem("atividadesFeitas",JSON.stringify(a)); }
-
-function criarAba(cfg){
-  const dl=document.getElementById(cfg.datalist);
-  cfg.lista.forEach(it=>{ const o=document.createElement("option"); o.value=it; dl.appendChild(o); });
-  const getDados=()=>JSON.parse(localStorage.getItem(cfg.chaveStorage)||"{}");
-  const salvar=o=>localStorage.setItem(cfg.chaveStorage,JSON.stringify(o));
-  document.getElementById(cfg.addBtn).addEventListener("click",()=>{
-    const dia=document.getElementById(cfg.diaSel).value;
-    const nome=document.getElementById(cfg.nomeInput).value.trim();
-    if(!nome){ alert("Digite ou escolha uma atividade! 📋"); return; }
-    const dd=getDados(); if(!dd[dia])dd[dia]=[]; dd[dia].push(nome); salvar(dd);
-    document.getElementById(cfg.nomeInput).value=""; render();
-  });
-  function render(){
-    const dados=getDados(), feitos=getFeitos(), hoje=new Date(), hojeKey=chaveData(hoje), diaHoje=hoje.getDay();
-    const g=document.getElementById(cfg.grade); g.innerHTML="";
-    for(let d=0;d<7;d++){
-      const card=document.createElement("div"); card.className="dia-card"+(d===diaHoje?" dia-hoje":"");
-      card.innerHTML=`<div class="dia-titulo">${DIAS_NOME[d]}${d===diaHoje?" (hoje)":""}</div>`;
-      const ul=document.createElement("ul"); ul.className="lista-ativ";
-      const ativs=dados[d]||[];
-      if(!ativs.length) ul.innerHTML=`<li class="vazio-ativ">— livre —</li>`;
-      ativs.forEach((nome,i)=>{
-        const cf=`${hojeKey}|${nome}|${cfg.tipo}`, feito=(d===diaHoje)&&feitos.includes(cf);
-        const li=document.createElement("li");
-        li.innerHTML=`<span class="ativ-nome ${feito?"feito":""}">${cfg.icone} ${nome}</span><span class="ativ-acoes">${d===diaHoje?`<button class="check-ativ">${feito?"✅":"⬜"}</button>`:""}<button class="del-ativ">✕</button></span>`;
-        const cb=li.querySelector(".check-ativ");
-        if(cb)cb.addEventListener("click",()=>{
-          let f=getFeitos();
-          if(f.includes(cf))f=f.filter(x=>x!==cf);
-          else{ f.push(cf); falar(`${nome} concluído!`); let ds=getDiasTreinados(); if(!ds.includes(hojeKey)){ds.push(hojeKey);salvarDiasTreinados(ds);} }
-          salvarFeitos(f); render(); renderCalendario(); atualizarOfensiva();
-        });
-        li.querySelector(".del-ativ").addEventListener("click",()=>{ const dd=getDados(); dd[d].splice(i,1); salvar(dd); render(); });
-        ul.appendChild(li);
-      });
-      card.appendChild(ul); g.appendChild(card);
-    }
-    renderStats();
-  }
-  function renderStats(){
-    const feitos=getFeitos(), hoje=new Date();
-    const pref=`${hoje.getFullYear()}-${pad(hoje.getMonth()+1)}`;
-    const doMes=feitos.filter(f=>f.startsWith(pref)&&f.split("|")[2]===cfg.tipo);
-    const el=document.getElementById(cfg.statsEl);
-    if(!doMes.length){ el.innerHTML=`<p class="stats-vazio">Nada concluído este mês ainda. Bora começar! 💪</p>`; return; }
-    const cont={}, diasAt=new Set();
-    doMes.forEach(f=>{ const[data,nome]=f.split("|"); cont[nome]=(cont[nome]||0)+1; diasAt.add(data); });
-    const rk=Object.entries(cont).sort((a,b)=>b[1]-a[1]);
-    let h=`<div class="stats-resumo"><div class="stat-item"><b>${doMes.length}</b><span>atividades</span></div><div class="stat-item"><b>${diasAt.size}</b><span>dias ativos</span></div></div><h4>🏆 Mais ${cfg.tipo==="estudo"?"estudadas":"praticadas"}:</h4><ul class="ranking">`;
-    rk.slice(0,6).forEach(([n,q],i)=>{ const m=["🥇","🥈","🥉"][i]||"▫️"; h+=`<li>${m} ${n} <b>${q}x</b></li>`; });
-    h+="</ul>"; el.innerHTML=h;
-  }
-  render();
-}
-criarAba({tipo:"treino",chaveStorage:"rotinaTreinos",lista:ESPORTES,icone:"🏋️",diaSel:"diaSemanaT",nomeInput:"nomeTreinoAtiv",datalist:"listaTreinos",addBtn:"addTreinoAtiv",grade:"gradeTreinos",statsEl:"statsTreinos"});
-criarAba({tipo:"estudo",chaveStorage:"rotinaEstudos",lista:MATERIAS,icone:"📚",diaSel:"diaSemanaE",nomeInput:"nomeEstudoAtiv",datalist:"listaEstudos",addBtn:"addEstudoAtiv",grade:"gradeEstudos",statsEl:"statsEstudos"});
-
-// inicializa
-renderCalendario();
-atualizarOfensiva();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
